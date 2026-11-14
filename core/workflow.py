@@ -25,7 +25,7 @@ def run_lesson_workflow(
     initial_lesson=None
 ):
     """
-    Generate, evaluate, and improve a lesson.
+    Generate, evaluate, and improve a lesson on any requested topic.
 
     Maximum attempts = 1 initial attempt + 2 retries.
     Persistent memory learns from every evaluation.
@@ -37,8 +37,7 @@ def run_lesson_workflow(
 
     total_attempts = MAX_RETRIES + 1
 
-    # Remove old results so a previous approval is not mistaken
-    # for the result of this workflow run.
+    # Remove old results before starting a new workflow.
     old_approval = OUTPUT_DIR / "approved_lesson.md"
     old_report = OUTPUT_DIR / "final_evaluation.json"
     old_rejection_log = REJECTION_DIR / "rejection_log.json"
@@ -51,15 +50,14 @@ def run_lesson_workflow(
 
         print(f"\n{'=' * 55}")
         print(f"LESSON GENERATION - ATTEMPT {attempt}")
+        print(f"TOPIC: {topic}")
         print(f"{'=' * 55}")
 
-        # Use a deliberately flawed lesson for testing.
         if attempt == 1 and initial_lesson is not None:
             lesson = initial_lesson
             print("Using supplied initial lesson for evaluation.")
 
         else:
-            # Load the latest memory before every generation.
             memory_context = get_memory_guidance()
 
             lesson = generate_lesson(
@@ -72,7 +70,11 @@ def run_lesson_workflow(
 
         print("Evaluating lesson...")
 
-        evaluation = evaluate_lesson(lesson)
+        # Pass the requested topic to the evaluator.
+        evaluation = evaluate_lesson(
+            lesson=lesson,
+            topic=topic
+        )
 
         # Save what the system learned from this evaluation.
         update_memory(
@@ -86,8 +88,8 @@ def run_lesson_workflow(
         for name, criterion in evaluation.criteria.items():
             print(f"{name}: {criterion.status}")
 
-        # Save details about this evaluation attempt.
         attempt_record = {
+            "topic": topic,
             "attempt": attempt,
             "timestamp": datetime.now().isoformat(),
             "status": evaluation.overall_status,
@@ -98,7 +100,7 @@ def run_lesson_workflow(
             "summary": evaluation.summary
         }
 
-        # If every criterion passes, approve the lesson.
+        # Approve only when every criterion passes.
         if evaluation.overall_status == "PASS":
 
             approved_path = OUTPUT_DIR / "approved_lesson.md"
@@ -119,6 +121,7 @@ def run_lesson_workflow(
 
             return {
                 "status": "PASS",
+                "topic": topic,
                 "lesson": lesson,
                 "attempts": attempt,
                 "evaluation": evaluation
@@ -150,6 +153,7 @@ def run_lesson_workflow(
 
     return {
         "status": "FAIL",
+        "topic": topic,
         "lesson": None,
         "attempts": total_attempts,
         "evaluation": None

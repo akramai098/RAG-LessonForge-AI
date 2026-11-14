@@ -32,7 +32,6 @@ def setup_test_environment(tmp_path, monkeypatch):
     output_dir = tmp_path / "lesson_output"
     rejection_dir = tmp_path / "rejection_logs"
 
-    # Create temporary folders.
     output_dir.mkdir(parents=True, exist_ok=True)
     rejection_dir.mkdir(parents=True, exist_ok=True)
 
@@ -64,22 +63,35 @@ def test_workflow_passes_after_one_retry(tmp_path, monkeypatch):
         make_evaluation("PASS")
     ]
 
+    received_topics = []
+
     monkeypatch.setattr(
         workflow,
         "generate_lesson",
         lambda **kwargs: "Generated lesson"
     )
 
+    def mock_evaluator(lesson, topic="Introduction to RAG"):
+        received_topics.append(topic)
+        return evaluations.pop(0)
+
     monkeypatch.setattr(
         workflow,
         "evaluate_lesson",
-        lambda lesson: evaluations.pop(0)
+        mock_evaluator
     )
 
-    result = workflow.run_lesson_workflow()
+    result = workflow.run_lesson_workflow(
+        topic="Introduction to Machine Learning"
+    )
 
     assert result["status"] == "PASS"
     assert result["attempts"] == 2
+    assert result["topic"] == "Introduction to Machine Learning"
+    assert received_topics == [
+        "Introduction to Machine Learning",
+        "Introduction to Machine Learning"
+    ]
 
     assert (output_dir / "approved_lesson.md").exists()
     assert (output_dir / "final_evaluation.json").exists()
@@ -101,13 +113,16 @@ def test_workflow_fails_after_maximum_retries(
     monkeypatch.setattr(
         workflow,
         "evaluate_lesson",
-        lambda lesson: make_evaluation("FAIL")
+        lambda lesson, topic="Introduction to RAG": make_evaluation("FAIL")
     )
 
-    result = workflow.run_lesson_workflow()
+    result = workflow.run_lesson_workflow(
+        topic="Python Programming"
+    )
 
     assert result["status"] == "FAIL"
     assert result["attempts"] == 3
+    assert result["topic"] == "Python Programming"
 
     assert not (output_dir / "approved_lesson.md").exists()
     assert (rejection_dir / "rejection_log.json").exists()

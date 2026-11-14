@@ -20,35 +20,49 @@ class EvaluationResult(BaseModel):
     summary: str
 
 
-def evaluate_lesson(lesson: str) -> EvaluationResult:
+def evaluate_lesson(
+    lesson: str,
+    topic: str = "Introduction to RAG"
+) -> EvaluationResult:
     """
     Independently evaluate a generated lesson against
-    six strict pass/fail criteria.
+    six strict, topic-independent pass/fail criteria.
     """
 
     rubric_text = json.dumps(RUBRIC, indent=2)
+    required_keys = ", ".join(REQUIRED_CRITERIA)
 
     prompt = f"""
 You are a strict educational quality evaluator.
 
-Evaluate the lesson below using EVERY criterion in the rubric.
+REQUESTED TOPIC:
+{topic}
+
+Your job is to evaluate whether the lesson teaches the requested
+topic accurately and effectively to a complete beginner.
 
 RUBRIC:
 {rubric_text}
 
-RULES:
+EVALUATION RULES:
+
 1. Evaluate the actual lesson, not what you think it intended to say.
-2. Each criterion must independently receive PASS or FAIL.
-3. PASS only when the requirement is clearly satisfied.
-4. If evidence is missing or insufficient, assign FAIL.
-5. Do not give partial credit.
-6. Do not allow strong performance in one criterion to compensate
+2. Evaluate topic coverage specifically against: {topic}.
+3. Identify the essential concepts that a beginner should learn
+   about this particular topic.
+4. Do not require RAG concepts unless the requested topic is RAG
+   or those concepts are genuinely relevant.
+5. Each criterion must independently receive PASS or FAIL.
+6. PASS only when the requirement is clearly satisfied.
+7. If evidence is missing or insufficient, assign FAIL.
+8. Do not give partial credit.
+9. Do not allow strong performance in one criterion to compensate
    for failure in another.
-7. Include a short reason and direct evidence for each criterion.
-8. overall_status must be PASS only if ALL six criteria pass.
-9. Use exactly these six criterion keys:
-   accuracy, beginner_friendly, practical_example,
-   jargon_explained, topic_coverage, logical_flow.
+10. Include a short reason and evidence from the actual lesson
+    for every criterion.
+11. overall_status must be PASS only if ALL six criteria pass.
+12. Use exactly these six criterion keys: {required_keys}.
+13. Do not invent evidence or assume content exists when it does not.
 
 LESSON:
 <lesson>
@@ -101,7 +115,7 @@ Return ONLY valid JSON in this exact structure:
         max_output_tokens=3000
     )
 
-    # Remove Markdown code fences if the model includes them.
+    # Remove Markdown code fences if present.
     cleaned_response = re.sub(
         r"^```(?:json)?\s*|\s*```$",
         "",
@@ -111,14 +125,16 @@ Return ONLY valid JSON in this exact structure:
 
     data = json.loads(cleaned_response)
 
-    # Validate the model's output structure.
+    # Validate the evaluator's output structure.
     result = EvaluationResult.model_validate(data)
 
     # Enforce exactly six required criteria.
     if set(result.criteria.keys()) != set(REQUIRED_CRITERIA):
-        raise ValueError("Evaluator returned missing or unexpected criteria.")
+        raise ValueError(
+            "Evaluator returned missing or unexpected criteria."
+        )
 
-    # Validate status values.
+    # Validate individual criterion statuses.
     for name, criterion in result.criteria.items():
         if criterion.status not in {"PASS", "FAIL"}:
             raise ValueError(f"Invalid status for criterion: {name}")

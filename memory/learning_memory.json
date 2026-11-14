@@ -1,6 +1,6 @@
 {
-    "total_runs": 8,
-    "total_passes": 6,
+    "total_runs": 9,
+    "total_passes": 7,
     "total_failures": 2,
     "failure_counts": {
         "practical_example": 2,
@@ -87,6 +87,14 @@
             "status": "PASS",
             "failed_criteria": [],
             "summary": "The lesson successfully meets all evaluation criteria, providing an accurate, beginner-friendly, and well-structured explanation of Retrieval-Augmented Generation complete with practical examples and jargon explanations."
+        },
+        {
+            "timestamp": "2026-11-14T09:57:59.143497",
+            "topic": "Introduction to machine learning",
+            "attempt": 1,
+            "status": "PASS",
+            "failed_criteria": [],
+            "summary": "The lesson is an exemplary introductory guide to machine learning. It covers all essential foundational concepts accurately, explains technical jargon simply, incorporates a realistic practical example, and follows a clean, logical pedagogical flow."
         }
     ]
 }

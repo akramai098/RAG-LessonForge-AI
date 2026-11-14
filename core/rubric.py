@@ -1,22 +1,40 @@
 
 RUBRIC = {
     "accuracy": {
-        "description": "The lesson explains RAG accurately and does not contain misleading technical claims."
+        "description": (
+            "The lesson explains the requested topic accurately, "
+            "uses correct information, and avoids misleading claims."
+        )
     },
     "beginner_friendly": {
-        "description": "The lesson uses simple language that a complete beginner can understand."
+        "description": (
+            "The lesson uses simple, clear language that a complete "
+            "beginner can understand without prior knowledge."
+        )
     },
     "practical_example": {
-        "description": "The lesson includes at least one clear, realistic, step-by-step practical example."
+        "description": (
+            "The lesson includes at least one clear, realistic, "
+            "relevant practical example with sufficient explanation."
+        )
     },
     "jargon_explained": {
-        "description": "Technical terms such as embeddings and vector databases are explained in simple language."
+        "description": (
+            "Important technical terms and subject-specific terminology "
+            "are explained clearly when they first appear."
+        )
     },
     "topic_coverage": {
-        "description": "The lesson covers what RAG is, why it is needed, retrieval, augmentation, generation, embeddings, vector databases, and real-world applications."
+        "description": (
+            "The lesson covers the essential concepts, principles, "
+            "and subtopics relevant to the requested topic."
+        )
     },
     "logical_flow": {
-        "description": "The lesson follows a coherent structure with a logical progression from introduction to summary."
+        "description": (
+            "The lesson follows a coherent structure with a logical "
+            "progression from introduction to conclusion."
+        )
     }
 }
 
